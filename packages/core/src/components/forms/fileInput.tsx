@@ -12,6 +12,13 @@ import { DISPLAYNAME_PREFIX, IProps } from "../../common/props";
 
 export interface IFileInputProps extends React.LabelHTMLAttributes<HTMLLabelElement>, IProps {
     /**
+     * Whether to set the file input to select directory instead of files
+     * Setting this to `true` will also change the default text to Select Folder
+     * @default false
+     */
+    directory?: boolean;
+
+    /**
      * Whether the file input is non-interactive.
      * Setting this to `true` will automatically disable the child input too.
      */
@@ -59,12 +66,20 @@ export class FileInput extends React.PureComponent<IFileInputProps, {}> {
     public static displayName = `${DISPLAYNAME_PREFIX}.FileInput`;
 
     public static defaultProps: IFileInputProps = {
+        directory: false,
         inputProps: {},
-        text: "Choose file...",
     };
 
     public render() {
-        const { className, fill, disabled, inputProps, onInputChange, large, text, ...htmlProps } = this.props;
+        const { className, fill, directory, disabled, inputProps, onInputChange, large, ...htmlProps } = this.props;
+        const text = this.props.text || `Choose ${directory ? "folder" : "file"}...`;
+        /* We need to set the DOM attribute values as string instead of boolean
+           since React doesn't allow to pass boolean in arbitrary/custom DOM attributes.
+           Also, empty strings get stripped in DOM output, so the end result looks neat
+           ie. <input webkitdirectory type="file" /> instead of <input webkitdirectory="" type="file" /> */
+        const directoryProps = directory
+            ? { webkitdirectory: "", mozdirectory: "", nwdirectory: "", directory: "" }
+            : {};
 
         const rootClasses = classNames(
             Classes.FILE_INPUT,
@@ -78,7 +93,13 @@ export class FileInput extends React.PureComponent<IFileInputProps, {}> {
 
         return (
             <label {...htmlProps} className={rootClasses}>
-                <input {...inputProps} onChange={this.handleInputChange} type="file" disabled={disabled} />
+                <input
+                    {...inputProps}
+                    {...directoryProps}
+                    onChange={this.handleInputChange}
+                    type="file"
+                    disabled={disabled}
+                />
                 <span className={Classes.FILE_UPLOAD_INPUT}>{text}</span>
             </label>
         );
